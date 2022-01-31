@@ -46,7 +46,10 @@ server.post("/participants", async (req, res) => {
     res.sendStatus(201);
 })
 
-server.get("/participants", (req, res) => {
+server.get("/participants", async (req, res) => {
+    await db.collection("participants").find().toArray().then(participants => {
+        res.send(participants);
+    });
 })
 
 server.post("/messages", (req, res) => {
