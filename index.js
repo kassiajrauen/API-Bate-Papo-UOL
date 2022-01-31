@@ -74,7 +74,7 @@ server.post("/messages", async (req, res) => {
     };
 
     await db.collection("message").insert({
-        from: req.header("User"), 
+        from: req.headers.user, 
         to: message.to, 
         text: message.text,
         type: message.type, 
@@ -92,8 +92,22 @@ server.get("/messages", async (req, res) => {
     });
 })
 
-server.post("/status", (req, res) => {
+server.post("/status", async (req, res) => {
+    const user = req.headers.user;
+    console.log(user)
 
+   await db.collection("participants").findOne({name: user})
+    .then((isActivate) => {
+        if(!isActivate){
+            res.sendStatus(404)
+            return;
+    }});
+
+    await db.collection("participants").updateOne(
+        {name: user},
+        {$set: {lastStatus: Date.now()}});
+
+    res.sendStatus(200);
 })
 
 server.listen(5000);
