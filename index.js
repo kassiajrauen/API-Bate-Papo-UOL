@@ -11,6 +11,12 @@ const userSchema = joi.object({
     name: joi.string().min(1).max(12).required(),
 })
 
+const messageSchema = joi.object({
+    to: joi.string().required(),
+    text: joi.string().min(1).required(),
+    type: joi.string().allow('message').allow('private_message').required(),
+})
+
 const mongoClient = new MongoClient(process.env.MONGO_URI);
 let db;
 
@@ -27,7 +33,7 @@ server.post("/participants", async (req, res) => {
     
     const validation = userSchema.validate(participant);
 
-    if(!validation){
+    if(validation.error){
         res.sendStatus(422)
         return;
     };
@@ -41,7 +47,12 @@ server.post("/participants", async (req, res) => {
     
     await db.collection("participants").insertOne({name: participant.name.toLowerCase(), lastStatus: Date.now()});
 
-    await db.collection("message").insertOne({from: participant.name, to: 'Todos', text: 'entra na sala...', type: 'status', time: dayjs().format('HH:MM:SS')});
+    await db.collection("message").insertOne({
+        from: participant.name, 
+        to: 'Todos', 
+        text: 'entra na sala...', 
+        type: 'status', 
+        time: dayjs().format('HH:MM:SS')});
 
     res.sendStatus(201);
 })
@@ -52,12 +63,29 @@ server.get("/participants", async (req, res) => {
     });
 })
 
-server.post("/messages", (req, res) => {
+server.post("/messages", async (req, res) => {
+    const message = req.body;
 
+    const validation = messageSchema.validate(message);
+
+    if(validation.error){
+        res.sendStatus(422)
+        return;
+    };
+
+    await db.collection("message").insert({
+        from: req.header("User"), 
+        to: message.to, 
+        text: message.text,
+        type: message.type, 
+        time: dayjs().format("HH:MM:SS")
+    });
+
+    res.sendStatus(201);
 })
 
-server.get("/messages", (req, res) => {
-
+server.get("/messages", async (req, res) => {
+    
 })
 
 server.post("/status", (req, res) => {
