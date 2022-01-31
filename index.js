@@ -85,7 +85,11 @@ server.post("/messages", async (req, res) => {
 })
 
 server.get("/messages", async (req, res) => {
-    
+    const limit = parseInt(req.query.limit);
+
+    await db.collection("message").find().limit(limit).toArray().then(messages => {
+        res.send(messages);
+    });
 })
 
 server.post("/status", (req, res) => {
